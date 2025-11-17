@@ -14,4 +14,4 @@ node.default['root_password_rotation']['password_source'] = 'data_bag'
 node.default['root_password_rotation']['data_bag_name'] = 'passwords'
 node.default['root_password_rotation']['data_bag_item'] = 'admin'
 
-include_recipe 'root-password-rotation::windows'
+include_recipe 'root-password-rotation::windows_password'

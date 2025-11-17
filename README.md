@@ -4,10 +4,16 @@ A Chef cookbook for managing root (Linux) and Administrator (Windows) password r
 
 ## Description
 
-This cookbook provides a secure and consistent way to rotate administrator passwords across different operating systems. It supports:
+This cookbook provides a secure and consistent way to rotate administrator passwords and rename administrator accounts across different operating systems. It supports:
 
 - **Linux Systems**: Amazon Linux, Ubuntu (and other Debian/RHEL-based distributions)
+  - Change root or custom user passwords
+  - Rename root or custom user accounts
+  - Rename home directories
 - **Windows Systems**: Windows Server 2022 (and other Windows Server versions)
+  - Change Administrator or custom user passwords
+  - Rename Administrator or custom user accounts
+  - Update profile paths and home directories
 
 ## Supported Platforms
 
@@ -36,7 +42,12 @@ No external cookbook dependencies.
 | `['root_password_rotation']['data_bag_item']` | `'admin'` | Data bag item name |
 | `['root_password_rotation']['password']` | `nil` | Password (only used with `password_source = 'attribute'`) |
 | `['root_password_rotation']['linux']['username']` | `'root'` | Linux username to manage |
+| `['root_password_rotation']['linux']['new_username']` | `nil` | New username for Linux (if renaming) |
+| `['root_password_rotation']['linux']['rename_home_dir']` | `true` | Rename home directory when renaming user |
 | `['root_password_rotation']['windows']['username']` | `'Administrator'` | Windows username to manage |
+| `['root_password_rotation']['windows']['new_username']` | `nil` | New username for Windows (if renaming) |
+| `['root_password_rotation']['windows']['rename_home_dir']` | `true` | Rename home directory when renaming user |
+| `['root_password_rotation']['windows']['update_profile_path']` | `true` | Update registry profile path when renaming |
 | `['root_password_rotation']['log_changes']` | `true` | Log password changes |
 
 ### Optional Windows Attributes
@@ -128,10 +139,40 @@ Force password change on next logon:
 node.default['root_password_rotation']['windows']['force_change_on_logon'] = true
 ```
 
+### Renaming User Accounts
+
+To rename the root (Linux) or Administrator (Windows) account:
+
+**Linux - Rename root to sysadmin:**
+```ruby
+node.default['root_password_rotation']['linux']['username'] = 'root'
+node.default['root_password_rotation']['linux']['new_username'] = 'sysadmin'
+node.default['root_password_rotation']['linux']['rename_home_dir'] = true
+
+include_recipe 'root-password-rotation::linux_user'
+```
+
+**Windows - Rename Administrator to WinAdmin:**
+```ruby
+node.default['root_password_rotation']['windows']['username'] = 'Administrator'
+node.default['root_password_rotation']['windows']['new_username'] = 'WinAdmin'
+node.default['root_password_rotation']['windows']['rename_home_dir'] = true
+node.default['root_password_rotation']['windows']['update_profile_path'] = true
+
+include_recipe 'root-password-rotation::windows_user'
+```
+
+**Important Notes:**
+- The rename recipes should be run **before** the password rotation recipes
+- The new username must not already exist on the system
+- For Linux, non-root user processes will be killed before rename (necessary for the operation)
+- For Windows, the user should not be logged in when renaming (home directory rename may fail otherwise)
+- After renaming, the username attribute is automatically updated to the new name
+
 ## Recipes
 
 ### default
-The main recipe that determines the platform and includes the appropriate platform-specific recipe.
+The main recipe that determines the platform and includes the appropriate platform-specific recipe for password rotation.
 
 ### linux
 Manages password rotation for Linux systems (Amazon Linux, Ubuntu, RHEL, Debian, etc.).
@@ -142,6 +183,17 @@ Features:
 - Supports platform-specific passwords
 - Secure password handling
 
+### linux_user
+Renames a Linux user account (e.g., root to a custom name).
+
+Features:
+- Verifies current user exists and new username is available
+- Kills user processes (for non-root users) before rename
+- Renames user account and associated group
+- Optionally renames home directory and updates paths
+- Verifies successful rename
+- Updates node attributes with new username
+
 ### windows
 Manages password rotation for Windows systems (Windows Server 2022, etc.).
 
@@ -151,6 +203,17 @@ Features:
 - Optional password expiration settings
 - Optional force password change on next logon
 - Marked as sensitive to prevent password exposure in logs
+
+### windows_user
+Renames a Windows user account (e.g., Administrator to a custom name).
+
+Features:
+- Verifies current user exists and new username is available
+- Renames user account using PowerShell cmdlets
+- Optionally updates registry profile paths
+- Optionally renames home directory (profile folder)
+- Verifies successful rename
+- Updates node attributes with new username
 
 ## Security Considerations
 
@@ -166,6 +229,13 @@ Features:
 4. **Rotation Schedule**: Set up a regular password rotation schedule using Chef's scheduling capabilities or external orchestration.
 
 5. **Audit Logging**: Enable `log_changes` attribute to track when passwords are changed.
+
+6. **User Rename Caution**: Renaming administrator accounts (especially root/Administrator) can impact:
+   - Active sessions and running processes
+   - Scripts and automation that reference the old username
+   - File permissions and ownership
+   - Service accounts and scheduled tasks
+   - Always test in a non-production environment first
 
 6. **Access Control**: Restrict access to:
    - Encrypted data bag secret

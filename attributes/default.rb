@@ -24,13 +24,21 @@ default['root_password_rotation']['data_bag_item'] = 'admin'
 # WARNING: This is not secure for production use!
 default['root_password_rotation']['password'] = nil
 
+# Enable/disable password rotation
+default['root_password_rotation']['rotate_password'] = true
+
 # Linux configuration
 default['root_password_rotation']['linux']['username'] = 'root'
 default['root_password_rotation']['linux']['enforce_password_change'] = true
+default['root_password_rotation']['linux']['new_username'] = nil  # Set to rename the user
+default['root_password_rotation']['linux']['rename_home_dir'] = true  # Rename home directory when renaming user
 
 # Windows configuration
 default['root_password_rotation']['windows']['username'] = 'Administrator'
 default['root_password_rotation']['windows']['enforce_password_change'] = true
+default['root_password_rotation']['windows']['new_username'] = nil  # Set to rename the user
+default['root_password_rotation']['windows']['rename_home_dir'] = true  # Rename home directory when renaming user
+default['root_password_rotation']['windows']['update_profile_path'] = true  # Update registry profile path
 
 # Logging
 default['root_password_rotation']['log_changes'] = true
