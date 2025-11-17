@@ -1,0 +1,9 @@
+{
+  "id": "admin",
+  "linux_password": "ChangeMe_Linux123!",
+  "windows_password": "ChangeMe_Windows123!",
+  "amazon_password": "ChangeMe_Amazon123!",
+  "ubuntu_password": "ChangeMe_Ubuntu123!",
+  "comment": "Example encrypted data bag item for password storage",
+  "last_rotated": "2025-11-17"
+}
