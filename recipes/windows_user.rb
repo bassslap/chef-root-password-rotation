@@ -62,14 +62,14 @@ powershell_script 'rename_windows_user' do
   code <<-PWSH
     $currentUsername = '#{current_username}'
     $newUsername = '#{new_username}'
-    
+
     try {
       # Get the user object
       $user = Get-LocalUser -Name $currentUsername -ErrorAction Stop
-      
+    #{'  '}
       # Rename the user
       Rename-LocalUser -Name $currentUsername -NewName $newUsername -ErrorAction Stop
-      
+    #{'  '}
       Write-Output "Successfully renamed user from '$currentUsername' to '$newUsername'"
       exit 0
     } catch {
@@ -86,17 +86,17 @@ powershell_script 'update_profile_path' do
   code <<-PWSH
     $currentUsername = '#{current_username}'
     $newUsername = '#{new_username}'
-    
+
     # Get the user's SID
     $user = Get-LocalUser -Name $newUsername -ErrorAction Stop
     $sid = $user.SID.Value
-    
+
     # Update profile path in registry
     $profilePath = "Registry::HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList\\$sid"
-    
+
     if (Test-Path $profilePath) {
       $currentProfileImagePath = Get-ItemProperty -Path $profilePath -Name "ProfileImagePath" -ErrorAction SilentlyContinue
-      
+    #{'  '}
       if ($currentProfileImagePath.ProfileImagePath -match $currentUsername) {
         $newProfileImagePath = $currentProfileImagePath.ProfileImagePath -replace $currentUsername, $newUsername
         Set-ItemProperty -Path $profilePath -Name "ProfileImagePath" -Value $newProfileImagePath
@@ -113,10 +113,10 @@ powershell_script 'rename_windows_home_directory' do
   code <<-PWSH
     $currentUsername = '#{current_username}'
     $newUsername = '#{new_username}'
-    
+
     $oldProfilePath = "C:\\Users\\$currentUsername"
     $newProfilePath = "C:\\Users\\$newUsername"
-    
+
     if (Test-Path $oldProfilePath) {
       try {
         # Rename the directory
@@ -162,12 +162,12 @@ powershell_script 'verify_windows_user_rename' do
   code <<-PWSH
     $newUsername = '#{new_username}'
     $user = Get-LocalUser -Name $newUsername -ErrorAction SilentlyContinue
-    
+
     if ($null -eq $user) {
       Write-Error "Failed to verify that user was renamed to '$newUsername'"
       exit 1
     }
-    
+
     Write-Output "Successfully verified user rename to '$newUsername'"
     exit 0
   PWSH

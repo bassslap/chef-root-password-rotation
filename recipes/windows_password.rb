@@ -18,30 +18,30 @@ Chef::Log.info("Managing password for Windows user: #{username}")
 
 # Retrieve password based on configured source
 password = case node['root_password_rotation']['password_source']
-when 'data_bag'
-  # Retrieve password from encrypted data bag
-  begin
-    data_bag_name = node['root_password_rotation']['data_bag_name']
-    data_bag_item_name = node['root_password_rotation']['data_bag_item']
-    
-    password_item = data_bag_item(data_bag_name, data_bag_item_name)
-    
-    # Try to get platform-specific password first, then fall back to generic
-    password_item['windows_password'] || 
-    password_item['password']
-  rescue Net::HTTPClientException, Chef::Exceptions::InvalidDataBagPath => e
-    Chef::Log.error("Failed to retrieve password from data bag: #{e.message}")
-    Chef::Log.error("Make sure data bag '#{data_bag_name}' and item '#{data_bag_item_name}' exist")
-    nil
-  end
-when 'attribute'
-  # Use password from node attribute (NOT recommended for production)
-  Chef::Log.warn('Using password from node attributes - this is not secure for production!')
-  node['root_password_rotation']['password']
-else
-  Chef::Log.error("Invalid password source: #{node['root_password_rotation']['password_source']}")
-  nil
-end
+           when 'data_bag'
+             # Retrieve password from encrypted data bag
+             begin
+               data_bag_name = node['root_password_rotation']['data_bag_name']
+               data_bag_item_name = node['root_password_rotation']['data_bag_item']
+
+               password_item = data_bag_item(data_bag_name, data_bag_item_name)
+
+               # Try to get platform-specific password first, then fall back to generic
+               password_item['windows_password'] ||
+                 password_item['password']
+             rescue Net::HTTPClientException, Chef::Exceptions::InvalidDataBagPath => e
+               Chef::Log.error("Failed to retrieve password from data bag: #{e.message}")
+               Chef::Log.error("Make sure data bag '#{data_bag_name}' and item '#{data_bag_item_name}' exist")
+               nil
+             end
+           when 'attribute'
+             # Use password from node attribute (NOT recommended for production)
+             Chef::Log.warn('Using password from node attributes - this is not secure for production!')
+             node['root_password_rotation']['password']
+           else
+             Chef::Log.error("Invalid password source: #{node['root_password_rotation']['password_source']}")
+             nil
+           end
 
 # Only proceed if we have a password
 if password.nil? || password.empty?
@@ -68,16 +68,16 @@ powershell_script 'change_windows_password' do
   code <<-PWSH
     $username = '#{username}'
     $password = '#{password}'
-    
+
     # Convert password to SecureString
     $securePassword = ConvertTo-SecureString $password -AsPlainText -Force
-    
+
     # Get the user object
     $user = Get-LocalUser -Name $username -ErrorAction Stop
-    
+
     # Set the password
     $user | Set-LocalUser -Password $securePassword
-    
+
     # Verify the password was set
     if ($?) {
       Write-Output "Password for user '$username' has been updated successfully"
@@ -116,10 +116,10 @@ powershell_script 'force_password_change_on_logon' do
     $username = '#{username}'
     $user = Get-LocalUser -Name $username
     $user | Set-LocalUser -PasswordNeverExpires $false
-    
+
     # Use net user command as Set-LocalUser doesn't have a direct option
     net user $username /logonpasswordchg:yes
-    
+
     Write-Output "User '$username' will be required to change password on next logon"
   PWSH
   action :run

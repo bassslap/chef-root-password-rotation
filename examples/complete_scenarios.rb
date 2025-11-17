@@ -12,7 +12,7 @@ include_recipe 'root-password-rotation::default'
 # ============================================
 # Scenario 2: Only rename user (no password change)
 # ============================================
-node.default['root_password_rotation']['rotate_password'] = false  # Disable password rotation
+node.default['root_password_rotation']['rotate_password'] = false # Disable password rotation
 node.default['root_password_rotation']['linux']['username'] = 'root'
 node.default['root_password_rotation']['linux']['new_username'] = 'sysadmin'
 

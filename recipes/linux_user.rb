@@ -33,9 +33,9 @@ Chef::Log.info("Renaming Linux user from '#{current_username}' to '#{new_usernam
 ruby_block 'verify_current_user_exists' do
   block do
     unless File.exist?('/etc/passwd')
-      raise "Cannot verify user - /etc/passwd not found"
+      raise 'Cannot verify user - /etc/passwd not found'
     end
-    
+
     user_exists = false
     File.open('/etc/passwd', 'r') do |file|
       file.each_line do |line|
@@ -45,11 +45,11 @@ ruby_block 'verify_current_user_exists' do
         end
       end
     end
-    
+
     unless user_exists
       raise "Current user '#{current_username}' does not exist on this system"
     end
-    
+
     Chef::Log.info("Verified that user '#{current_username}' exists")
   end
   action :run
@@ -67,11 +67,11 @@ ruby_block 'check_new_username_available' do
         end
       end
     end
-    
+
     if user_exists
       raise "New username '#{new_username}' already exists on this system"
     end
-    
+
     Chef::Log.info("Verified that username '#{new_username}' is available")
   end
   action :run
@@ -94,7 +94,7 @@ end
 execute 'kill_user_processes' do
   command "pkill -u #{current_username} || true"
   action :run
-  only_if { current_username != 'root' }  # Don't kill root processes
+  only_if { current_username != 'root' } # Don't kill root processes
 end
 
 # Rename the user account
@@ -164,11 +164,11 @@ ruby_block 'verify_user_rename' do
         end
       end
     end
-    
+
     unless user_exists
       raise "Failed to verify that user was renamed to '#{new_username}'"
     end
-    
+
     Chef::Log.info("Successfully verified user rename to '#{new_username}'")
   end
   action :run
