@@ -2,16 +2,16 @@
 # For more information on the Policyfile feature, visit
 # https://docs.chef.io/policyfile/
 
-name 'chef-root-password-rotation'
+name 'root-password-rotation'
 
 # Where to find external cookbooks:
 default_source :supermarket
 
 # Run list
-run_list 'chef-root-password-rotation::default'
+run_list 'root-password-rotation::default'
 
 # Cookbook versions
-cookbook 'chef-root-password-rotation', path: '.'
+cookbook 'root-password-rotation', path: '.'
 
 # Attributes
 default['root_password_rotation']['password_source'] = 'data_bag'
