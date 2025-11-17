@@ -1,0 +1,134 @@
+---
+driver:
+  name: ec2
+  aws_ssh_key_id: chef-testing
+  region: us-east-1
+  availability_zone: us-east-1a
+  require_chef_omnibus: true
+  instance_type: t3.small
+  associate_public_ip: true
+  interface: dns
+  # Global timeout settings (can be overridden per platform)
+  retryable_tries: 60      # Default wait time for instances
+  retryable_sleep: 5       # Default check interval
+  tags:
+    Project: 'chef-cookbook-testing'
+    Cookbook: 'root-password-rotation'
+    CreatedBy: 'test-kitchen'
+
+provisioner:
+  name: chef_infra
+  install_strategy: always
+  policyfile: Policyfile.rb
+  chef_license: accept-silent
+
+verifier:
+  name: inspec
+
+platforms:
+  # Modern Linux Platforms
+  - name: ubuntu-22.04
+    driver:
+      image_id: ami-0e2c8caa4b6378d8c  # Ubuntu 22.04 LTS (us-east-1)
+    transport:
+      username: ubuntu
+
+  - name: amazonlinux-2023
+    driver:
+      image_id: ami-0c101f26f147fa7fd  # Amazon Linux 2023 (us-east-1)
+    transport:
+      username: ec2-user
+
+  # Windows Server 2022
+  - name: windows-2022
+    driver:
+      image_id: ami-0f9c44e98edf38a2b  # Windows Server 2022 Base (us-east-1, latest)
+      instance_type: t3.medium
+      # Extend timeouts for Windows password retrieval and initialization
+      retryable_tries: 120  # Wait up to 20 minutes for instance ready
+      retryable_sleep: 10   # Check every 10 seconds
+      aws_ssh_key_id: chef-testing  # Ensure SSH key is explicit
+      # Additional Windows-specific settings
+      skip_cost_warning: true
+      ebs_optimized: false
+      # Force specific user data for Windows password setup
+      user_data: |
+        <powershell>
+        # Ensure WinRM is properly configured
+        Enable-PSRemoting -Force -SkipNetworkProfileCheck
+        Set-NetFirewallRule -Name "WINRM-HTTP-In-TCP-PUBLIC" -RemoteAddress Any
+        winrm set winrm/config/service '@{AllowUnencrypted="true"}'
+        winrm set winrm/config/service/auth '@{Basic="true"}'
+        </powershell>
+    transport:
+      name: winrm
+      username: administrator
+      elevated: true
+      # Extend WinRM connection timeouts
+      connection_retries: 10
+      connection_retry_sleep: 10
+      max_wait_until_ready: 1200  # 20 minutes
+
+suites:
+  - name: password-rotation
+    provisioner:
+      policyfile: Policyfile.rb
+    verifier:
+      inspec_tests:
+        - test/integration/password-rotation
+    attributes:
+      root_password_rotation:
+        password_source: 'attribute'
+        password: 'TestKitchenPassword123!'
+        rotate_password: true
+
+  - name: user-rename
+    provisioner:
+      policyfile: Policyfile.rb
+    verifier:
+      inspec_tests:
+        - test/integration/user-rename
+    attributes:
+      root_password_rotation:
+        password_source: 'attribute'
+        password: 'TestKitchenPassword123!'
+        rotate_password: true
+        linux:
+          username: 'root'
+          new_username: 'sysadmin'
+          rename_home_dir: true
+        windows:
+          username: 'Administrator'
+          new_username: 'WinAdmin'
+          rename_home_dir: true
+          update_profile_path: true
+
+  - name: password-only
+    provisioner:
+      policyfile: Policyfile.rb
+    verifier:
+      inspec_tests:
+        - test/integration/password-only
+    attributes:
+      root_password_rotation:
+        password_source: 'attribute'
+        password: 'NewPassword456!'
+        rotate_password: true
+
+  - name: rename-only
+    provisioner:
+      policyfile: Policyfile.rb
+    verifier:
+      inspec_tests:
+        - test/integration/rename-only
+    attributes:
+      root_password_rotation:
+        rotate_password: false
+        linux:
+          username: 'root'
+          new_username: 'adminuser'
+          rename_home_dir: false
+        windows:
+          username: 'Administrator'
+          new_username: 'AdminUser'
+          rename_home_dir: false

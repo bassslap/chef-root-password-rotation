@@ -3,7 +3,7 @@ maintainer 'Your Organization'
 maintainer_email 'ops@example.com'
 license 'Apache-2.0'
 description 'Manages root/administrator password rotation and account renaming for Linux and Windows systems'
-version '1.1.0'
+version '1.2.0'
 chef_version '>= 15.0'
 
 supports 'amazon'

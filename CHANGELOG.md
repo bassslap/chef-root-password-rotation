@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## 1.2.0 (2025-11-17)
+
+### Features
+- Added Test Kitchen configuration for AWS EC2 testing
+- Support for Ubuntu 22.04, Amazon Linux 2023, and Windows Server 2022
+- Four test suites: password-rotation, user-rename, password-only, rename-only
+- Comprehensive InSpec tests for verification
+- Gemfile with test dependencies
+
+### Testing
+- Kitchen configuration with EC2 driver
+- InSpec tests for all major functionality
+- Platform-specific test validation
+- Documentation for running tests
+
 ## 1.1.0 (2025-11-17)
 
 ### Features

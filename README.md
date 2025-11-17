@@ -244,35 +244,84 @@ Features:
 
 ## Testing
 
-### Kitchen Configuration Example
+This cookbook includes comprehensive Test Kitchen configuration for testing on AWS EC2 instances.
 
-```yaml
----
-driver:
-  name: vagrant
+### Prerequisites
 
-provisioner:
-  name: chef_zero
-  encrypted_data_bag_secret_key_path: test/integration/encrypted_data_bag_secret
+1. **Install dependencies:**
+   ```bash
+   bundle install
+   ```
 
-platforms:
-  - name: ubuntu-22.04
-  - name: amazonlinux-2023
-  - name: windows-2022
+2. **Configure AWS credentials:**
+   ```bash
+   export AWS_ACCESS_KEY_ID=your_access_key
+   export AWS_SECRET_ACCESS_KEY=your_secret_key
+   export AWS_REGION=us-east-1
+   ```
 
-suites:
-  - name: default
-    run_list:
-      - recipe[root-password-rotation::default]
-    attributes:
-```
+3. **Ensure SSH key exists:**
+   ```bash
+   # The kitchen.yml expects a key named 'chef-testing' in us-east-1
+   # Create one if it doesn't exist
+   ```
 
-### Test Password Setup
+### Running Tests
 
-Create a test encrypted data bag secret:
+**List all test instances:**
 ```bash
-openssl rand -base64 512 | tr -d '\r\n' > test/integration/encrypted_data_bag_secret
+bundle exec kitchen list
 ```
+
+**Test a specific platform:**
+```bash
+bundle exec kitchen test ubuntu-22-password-rotation
+bundle exec kitchen test amazonlinux-2023-user-rename
+bundle exec kitchen test windows-2022-password-only
+```
+
+**Test all platforms:**
+```bash
+bundle exec kitchen test
+```
+
+**Run specific suite:**
+```bash
+# Password rotation only
+bundle exec kitchen test password-rotation
+
+# User rename with password change
+bundle exec kitchen test user-rename
+
+# Password change only (no rename)
+bundle exec kitchen test password-only
+
+# User rename only (no password change)
+bundle exec kitchen test rename-only
+```
+
+### Test Suites
+
+1. **password-rotation**: Tests basic password rotation functionality
+2. **user-rename**: Tests renaming user accounts with password rotation
+3. **password-only**: Tests password rotation without user rename
+4. **rename-only**: Tests user rename without password rotation
+
+### Supported Platforms
+
+- Ubuntu 22.04 LTS
+- Amazon Linux 2023
+- Windows Server 2022
+
+### InSpec Tests
+
+The cookbook includes InSpec tests in `test/integration/` that verify:
+- User existence and properties
+- Password changes
+- User renames
+- Home directory changes
+- Group memberships
+- Windows profile paths
 
 ## Troubleshooting
 
