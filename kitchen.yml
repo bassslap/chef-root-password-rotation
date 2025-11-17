@@ -30,14 +30,30 @@ platforms:
   - name: ubuntu-22.04
     driver:
       image_id: ami-0e2c8caa4b6378d8c  # Ubuntu 22.04 LTS (us-east-1)
+      retryable_tries: 120
+      retryable_sleep: 10
     transport:
       username: ubuntu
+      ssh_key: ~/.ssh/chef-testing.pem
+      connection_timeout: 10
+      connection_retries: 5
+      connection_retry_sleep: 5
+      keepalive: true
+      keepalive_interval: 60
 
   - name: amazonlinux-2023
     driver:
       image_id: ami-0c101f26f147fa7fd  # Amazon Linux 2023 (us-east-1)
+      retryable_tries: 120
+      retryable_sleep: 10
     transport:
       username: ec2-user
+      ssh_key: ~/.ssh/chef-testing.pem
+      connection_timeout: 10
+      connection_retries: 5
+      connection_retry_sleep: 5
+      keepalive: true
+      keepalive_interval: 60
 
   # Windows Server 2022
   - name: windows-2022
