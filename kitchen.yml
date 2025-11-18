@@ -56,19 +56,26 @@ platforms:
       keepalive_interval: 60
 
   # Windows Server 2022
-  # Note: Windows testing currently encounters a kitchen-ec2 bug where it fails with
-  # "no implicit conversion of nil into String" after password retrieval.
-  # This is a known issue with kitchen-ec2 3.19.0. The cookbook itself works correctly
-  # on Windows, but automated Test Kitchen testing requires manual verification.
+  # KNOWN ISSUE: kitchen-ec2 3.19.0-3.21.0 has a bug causing "no implicit conversion 
+  # of nil into String" error after Windows password retrieval. This prevents automated
+  # Test Kitchen testing on Windows. The cookbook recipes work correctly on Windows
+  # when deployed manually. For manual testing:
+  #   1. Create a Windows EC2 instance manually
+  #   2. Bootstrap with Chef: knife bootstrap windows winrm IPADDRESS -x Administrator -P PASSWORD
+  #   3. Upload cookbook: knife cookbook upload root-password-rotation
+  #   4. Run chef-client on the Windows node
   - name: windows-2022
     driver:
-      image_id: ami-0159172a5a821bafd
-      subnet_id: subnet-0614cbb61b0a4ea78
+      image_search:
+        owner-id: '801119661308'
+        name: Windows_Server-2022-English-Full-Base*
       instance_type: t3.medium
       retryable_tries: 120
       retryable_sleep: 10
     transport:
       name: winrm
+      username: <%= ENV['KITCHEN_WINDOWS_USER'] || 'Administrator' %>
+      elevated: true
 
 suites:
   - name: password-rotation

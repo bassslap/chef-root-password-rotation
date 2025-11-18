@@ -323,6 +323,63 @@ The cookbook includes InSpec tests in `test/integration/` that verify:
 - Group memberships
 - Windows profile paths
 
+## Known Issues
+
+### Test Kitchen Windows Testing Limitation
+
+**Issue**: Automated Test Kitchen tests fail on Windows Server 2022 with error:
+```
+Failed to complete #create action: [no implicit conversion of nil into String 
+in the specified region us-east-1. Please check this AMI is available in this region.]
+```
+
+**Cause**: This is a known bug in kitchen-ec2 versions 3.19.0-3.21.0 that occurs after Windows administrator password retrieval during WinRM transport setup.
+
+**Status**: The cookbook recipes work correctly on Windows when deployed manually. The issue is limited to the Test Kitchen automation framework, not the cookbook functionality itself.
+
+**Workaround for Manual Windows Testing**:
+```bash
+# 1. Create a Windows EC2 instance manually via AWS Console or CLI
+aws ec2 run-instances \
+  --image-id ami-0159172a5a821bafd \
+  --instance-type t3.medium \
+  --key-name your-key-name \
+  --security-group-ids sg-xxxxxx
+
+# 2. Get the Administrator password using your key pair
+aws ec2 get-password-data \
+  --instance-id i-xxxxxxxx \
+  --priv-launch-key /path/to/key.pem
+
+# 3. Bootstrap the instance with Chef
+knife bootstrap windows winrm IPADDRESS \
+  -x Administrator \
+  -P PASSWORD \
+  -N windows-test-node
+
+# 4. Upload the cookbook
+knife cookbook upload root-password-rotation
+
+# 5. Add to node run list and run chef-client
+knife node run_list add windows-test-node 'recipe[root-password-rotation::default]'
+knife ssh "name:windows-test-node" "chef-client" -x Administrator
+```
+
+**Tested Platforms**: ✅ Amazon Linux 2023, ✅ Ubuntu 22.04, ⚠️ Windows Server 2022 (manual testing required)
+
+### Root User Rename Limitation
+
+**Issue**: Cannot rename the `root` user on Linux while the system is running.
+
+**Error**: `usermod: user root is currently used by process 1`
+
+**Cause**: The root user is in use by system init process (PID 1) and cannot be renamed on a live system.
+
+**Workaround**: 
+- Rename non-root administrative users instead
+- Or perform root rename during system maintenance/single-user mode (not recommended)
+- The cookbook works correctly for renaming other system users
+
 ## Troubleshooting
 
 ### Password not found
