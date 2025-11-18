@@ -58,27 +58,17 @@ platforms:
   # Windows Server 2022
   - name: windows-2022
     driver:
-      image_id: ami-0f9c44e98edf38a2b  # Windows Server 2022 Base (us-east-1, latest)
+      image_search:
+        owner-id: '801119661308'
+        name: Windows_Server-2022-English-Full-Base*
       instance_type: t3.medium
       # Extend timeouts for Windows password retrieval and initialization
       retryable_tries: 120  # Wait up to 20 minutes for instance ready
       retryable_sleep: 10   # Check every 10 seconds
-      aws_ssh_key_id: chef-testing  # Ensure SSH key is explicit
-      # Additional Windows-specific settings
       skip_cost_warning: true
-      ebs_optimized: false
-      # Force specific user data for Windows password setup
-      user_data: |
-        <powershell>
-        # Ensure WinRM is properly configured
-        Enable-PSRemoting -Force -SkipNetworkProfileCheck
-        Set-NetFirewallRule -Name "WINRM-HTTP-In-TCP-PUBLIC" -RemoteAddress Any
-        winrm set winrm/config/service '@{AllowUnencrypted="true"}'
-        winrm set winrm/config/service/auth '@{Basic="true"}'
-        </powershell>
     transport:
       name: winrm
-      username: administrator
+      username: Administrator
       elevated: true
       # Extend WinRM connection timeouts
       connection_retries: 10
