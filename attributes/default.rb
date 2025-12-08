@@ -2,7 +2,7 @@
 # Cookbook:: root-password-rotation
 # Attribute:: default
 #
-# Copyright:: 2025, Your Organization
+# Copyright:: 2025, Progress Software
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
